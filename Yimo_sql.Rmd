@@ -1,0 +1,105 @@
+---
+title: "Yimo_sql"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(RMySQL)
+con2 <- dbConnect(MySQL(),
+                 user = 'trial',
+                 password = 'password',
+                 host = '127.0.0.1',
+                 dbname='titanic')
+
+titanic <- read.table("/home/php2560/titanic.csv", header=TRUE, sep=",")
+
+dbWriteTable(con2, "titanic_yzhang", titanic, overwrite = T)
+
+
+```
+
+
+###1. Group rows by pclass and survived, for each group, calculate the average age
+```{r}
+query <- "select pclass, survived, avg(age) as avg_age from titanic_yzhang
+group by pclass, survived;"
+dbGetQuery(con2, query)
+
+```
+###2.Select the rows where survived equals to 1 and group the rows by pclass, then calculate the average age of each group
+```{r}
+query <- "select pclass, survived, avg(age) as avg_age from titanic_yzhang
+   where survived=1
+   group by pclass, survived;"
+dbGetQuery(con2, query)
+
+
+```
+
+###3.Select rows name, pclass, survived and age where the name begins with "(a)sen(bb)". [a and b refer to any single character and they can be the same.]
+```{r}
+query <- "select name, pclass, survived, age from titanic_zhang
+where name regexp '^.sen.+';"
+dbGetQuery(con2, query)
+
+```
+
+###4.Select name, pclass survived and age rows where the name contains "Jakob"
+```{r}
+query <-"select name, pclass, survived, age from titanic_yzhang
+where name regexp 'Jakob.*$'";
+dbGetQuery(con2, query)
+```
+###5.Select name, pclass survived and age where the name contains "ivar"
+```{r}
+query = "select name, pclass, survived, age from titanic_yzhang
+   where name regexp 'Ivar.*$'";
+dbGetQuery(con2, query)
+```
+###6.select name, pclass, survived and age where the name contains "Ivar" and a comma has appeared before "ivar"(not nessarily next to each other)
+```{r}
+query = "select name, pclass, survived, age from titanic_zhang
+   where name regexp ',.*Ivar.*$'";
+dbGetQuery(con2, query)
+```
+###7.group by pclass and calculate the average fare of each group.
+```{r}
+myQuery <- "select pclass, avg(fare) as avg_fare from titanic_yzhang
+          group by pclass;"
+myData <- dbGetQuery(con2, myQuery)
+library(ggplot2)
+ggplot(myData, aes(pclass, avg_fare)) + geom_bar(stat="identity")
+```
+###Challenge
+```{r}
+C_query = "select pclass, sex, age, fare, survived, parch from titanic_yzhang where survived = 0;"
+C_data = dbGetQuery(con2, C_query)
+```
+###Plot
+```{r}
+P_query = "select pclass, sex, avg(survived) as avg_survival from titanic_yzhang 
+           group by pclass, sex;"
+P_data = dbGetQuery(con2, P_query)
+library(ggplot2)
+library(scales)
+ggplot(P_data, aes(as.character(pclass), avg_survival, group = sex, color = sex))+
+  geom_line()+
+  scale_y_continuous(labels = percent_format())+
+  labs(x = "Class", y = "Average Survival")
+```
+
+
+
+
+###Attached:Certificate
+
+![*Fig. 1* SQL ](Certificate.PNG)
+
+###Attached:SQL teaching
+
+![*Fig. 2* SQL](SQL teaching.PNG)
+
